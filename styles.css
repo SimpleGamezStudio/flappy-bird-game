@@ -1,7 +1,7 @@
 body {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     height: 100vh;
     margin: 0;
     background-color: #70c5ce;
@@ -13,21 +13,34 @@ body {
     align-items: flex-start;
 }
 
-#ad-sidebar {
+#left-sidebar, #right-sidebar {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-right: 20px;
+    margin: 10px;
 }
 
-.ad-container {
+#ad-sidebar, .ad-container {
     margin-bottom: 20px;
+}
+
+#main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#top-ad, #bottom-ad {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
 }
 
 #game-container {
     position: relative;
     width: 320px;
     height: 580px; /* Adjust height as needed */
+    margin: 0 10px;
 }
 
 #score-container {
@@ -36,6 +49,7 @@ body {
     padding: 10px;
     background-color: #fff;
     border: 2px solid #000;
+    width: 100%;
 }
 
 #score, #highscore {
@@ -47,7 +61,6 @@ body {
     display: block;
     background-color: #fff;
     border: 2px solid #000;
-    margin-top: 10px;
     width: 100%;
     height: calc(100% - 100px); /* Adjust height to fit within the container */
 }
