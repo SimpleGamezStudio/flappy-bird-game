@@ -27,6 +27,7 @@ let frame = 0;
 let score = 0;
 let highScore = localStorage.getItem('highScore') || 0;
 let shootCooldown = 0;
+let gameActive = false;
 
 const background = new Image();
 background.src = 'https://i.postimg.cc/gjFy5fhM/image.png';
@@ -54,7 +55,7 @@ backgroundMusic.volume = 0.1; // Set volume to 10% of full volume
 const defaultVolume = 0.1;
 
 // Sound effect for wing flap (shortened version)
-const flapSound = new Audio('https://dl.dropboxusercontent.com/s/dy7etu816q8kroyvb6ywe/shortened_flap.mp3?rlkey=occqopkrvb6n7mh0oaa6l5gxw&st=ji76lly7');
+const flapSound = new Audio('https://dl.dropboxusercontent.com/s/dy7etu816q8kroyvb6n7mh0oaa6l5gxw/shortened_flap.mp3?rlkey=occqopkrvb6n7mh0oaa6l5gxw&st=ji76lly7');
 flapSound.volume = 1.0; // Increase volume to 100%
 
 // Sound effect for point
@@ -64,6 +65,8 @@ pointSound.volume = 1.0; // Increase volume to 100%
 // Sound effect for shooting
 const shootSound = new Audio('https://dl.dropboxusercontent.com/s/6zy9eulx8fql4vc/shoot-sound.mp3?rlkey=d4uepi4c1n1asx7mbv3uy1zk1&st=gxdm2u'); // Replace with actual shoot sound URL
 shootSound.volume = 1.0;
+
+let animationFrameId;
 
 function startMusic() {
     backgroundMusic.play();
@@ -106,7 +109,7 @@ function updateBird() {
             bird.y = 150;
             bird.velocity = 0;
         } else {
-            resetGame();
+            gameOver();
         }
     }
 }
@@ -256,7 +259,7 @@ function checkCollision() {
                 birdHitbox.x + birdHitbox.width > pipe.x &&
                 (birdHitbox.y < pipe.topHeight || birdHitbox.y + birdHitbox.height > pipe.bottom)
             ) {
-                resetGame();
+                gameOver();
             }
         });
         enemies.forEach((enemy, enemyIndex) => {
@@ -266,7 +269,7 @@ function checkCollision() {
                 bird.y < enemy.y + enemy.height &&
                 bird.y + bird.height > enemy.y
             ) {
-                resetGame();
+                gameOver();
             }
             projectiles.forEach((projectile, projectileIndex) => {
                 if (
@@ -287,7 +290,7 @@ function checkCollision() {
             bird.x < powerUp.x + powerUp.width &&
             bird.x + bird.width > powerUp.x &&
             bird.y < powerUp.y + powerUp.height &&
-            bird.y + bird.height > powerUp.y
+            bird.y + powerUp.height > powerUp.y
         ) {
             applyPowerUp(powerUp.type); // Apply the power-up effect
             powerUps.splice(index, 1); // Remove collected power-up
@@ -327,11 +330,6 @@ function shootProjectiles() {
 }
 
 function resetGame() {
-    if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('highScore', highScore);
-        document.getElementById('highscore').innerText = `High Score: ${highScore}`;
-    }
     bird.y = 150;
     bird.velocity = 0;
     pipes = [];
@@ -339,6 +337,7 @@ function resetGame() {
     powerUps = [];
     projectiles = [];
     score = 0;
+    frame = 0;
     document.getElementById('score').innerText = `Score: ${score}`;
 }
 
@@ -347,6 +346,7 @@ function drawBackground() {
 }
 
 function gameLoop() {
+    if (!gameActive) return; // Stop the loop if the game is not active
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackground();
     drawBird();
@@ -364,14 +364,16 @@ function gameLoop() {
     checkCollision();
     shootProjectiles(); // Make the bird shoot projectiles continuously
     frame++;
-    requestAnimationFrame(gameLoop);
+    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 // Add event listener to start music, bird movement, and play flap sound on key press
 document.addEventListener('keydown', (e) => {
     if (e.key === ' ') { // Space key for bird lift
-        bird.velocity += bird.lift;
-        playFlapSound();
+        if (gameActive) {
+            bird.velocity += bird.lift;
+            playFlapSound();
+        }
         if (backgroundMusic.paused) {
             startMusic();
         }
@@ -383,11 +385,64 @@ document.addEventListener('keydown', (e) => {
 // Add event listener to start music, bird movement, and play flap sound on touch
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault(); // Prevent default touch behavior
-    bird.velocity += bird.lift;
-    playFlapSound();
+    if (gameActive) {
+        bird.velocity += bird.lift;
+        playFlapSound();
+    }
     if (backgroundMusic.paused) {
         startMusic();
     }
 });
 
-gameLoop();
+document.addEventListener('DOMContentLoaded', () => {
+    const playButton = document.getElementById('play-button');
+    const mainMenu = document.getElementById('main-menu');
+    const leagueDisplay = document.getElementById('league-display');
+
+    // Function to determine league based on high score
+    function getLeague(score) {
+        if (score >= 40) return 'Master';
+        if (score >= 30) return 'Gold';
+        if (score >= 20) return 'Silver';
+        if (score >= 10) return 'Bronze';
+        return 'None';
+    }
+
+    // Function to update league display
+    function updateLeagueDisplay() {
+        const league = getLeague(highScore);
+        leagueDisplay.textContent = `League: ${league}`;
+    }
+
+    // Function to start the game
+    function startGame() {
+        mainMenu.style.display = 'none';
+        canvas.style.display = 'block';
+        gameActive = true;
+        gameLoop(); // Start game loop
+    }
+
+    // Set initial states
+    canvas.style.display = 'none';
+    updateLeagueDisplay();
+
+    // Add event listener to play button
+    playButton.addEventListener('click', startGame);
+
+    // Game over logic to update high score and return to main menu
+    function gameOver() {
+        gameActive = false;
+        cancelAnimationFrame(animationFrameId); // Stop the game loop
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('highScore', highScore);
+            document.getElementById('highscore').innerText = `High Score: ${highScore}`;
+        }
+        updateLeagueDisplay();
+        mainMenu.style.display = 'block';
+        canvas.style.display = 'none';
+        resetGame();
+    }
+
+    window.gameOver = gameOver; // Expose gameOver function for debugging
+});
