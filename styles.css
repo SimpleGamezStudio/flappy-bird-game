@@ -7,18 +7,27 @@ body {
     background-color: #70c5ce;
 }
 
+#container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+#ad-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.ad-container {
+    margin-bottom: 20px;
+}
+
 #game-container {
     position: relative;
     width: 320px;
-    height: 800px; /* Adjusted height to accommodate the ads */
-}
-
-#ad-container,
-#ad-container-2,
-#ad-container-3 {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 10px; /* Add some margin to separate ads from game */
+    height: 580px; /* Adjust height as needed */
 }
 
 #score-container {
